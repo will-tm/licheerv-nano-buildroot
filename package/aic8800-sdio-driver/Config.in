@@ -1,0 +1,5 @@
+config BR2_PACKAGE_AIC8800_SDIO_DRIVER
+	bool "aic8800-sdio-driver"
+	depends on BR2_LINUX_KERNEL
+	help
+	  Out-of-tree kernel driver for the AIC8800 SDIO WiFi chip.

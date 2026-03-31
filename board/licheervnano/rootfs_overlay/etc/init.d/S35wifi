@@ -1,0 +1,37 @@
+#!/bin/sh
+
+# WiFi power control via GPIOA26 using direct register access
+# GPIOA base: 0x03020000, pin 26
+wifi_power_on() {
+	# Set GPIOA26 pinmux to GPIO mode
+	devmem 0x0300104C 32 0x3
+	# Set GPIOA26 as output (set bit 26 in direction register)
+	devmem 0x03020004 32 $(printf "0x%x" $(($(devmem 0x03020004) | 0x4000000)))
+	# Power cycle: low then high
+	devmem 0x03020000 32 $(printf "0x%x" $(($(devmem 0x03020000) & ~0x4000000)))
+	sleep 0.1
+	devmem 0x03020000 32 $(printf "0x%x" $(($(devmem 0x03020000) | 0x4000000)))
+	sleep 0.2
+}
+
+case "$1" in
+start)
+	# Power cycle WiFi module and load drivers in background
+	(
+		wifi_power_on
+		modprobe aic8800_bsp 2>/dev/null
+		modprobe aic8800_fdrv 2>/dev/null
+		if [ -f /etc/wpa_supplicant.conf ]; then
+			sleep 2
+			wpa_supplicant -B -i wlan0 -c /etc/wpa_supplicant.conf -P /var/run/wpa_supplicant.pid 2>/dev/null
+			udhcpc -i wlan0 -t 5 -T 1 -A 3 -b -p /var/run/udhcpc.wlan0.pid 2>/dev/null
+		fi
+	) &
+	;;
+stop)
+	[ -f /var/run/udhcpc.wlan0.pid ] && kill "$(cat /var/run/udhcpc.wlan0.pid)" 2>/dev/null
+	[ -f /var/run/wpa_supplicant.pid ] && kill "$(cat /var/run/wpa_supplicant.pid)" 2>/dev/null
+	rmmod aic8800_fdrv 2>/dev/null
+	rmmod aic8800_bsp 2>/dev/null
+	;;
+esac

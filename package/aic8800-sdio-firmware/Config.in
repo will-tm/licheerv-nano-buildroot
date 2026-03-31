@@ -1,0 +1,4 @@
+config BR2_PACKAGE_AIC8800_SDIO_FIRMWARE
+	bool "aic8800-sdio-firmware"
+	help
+	  Firmware files for the AIC8800 SDIO WiFi chip.

@@ -1,0 +1,14 @@
+net: phylink: allow internal PHY mode validation
+
+--- a/drivers/net/phy/phylink.c	2026-03-30 15:48:59.247056988 -0400
++++ b/drivers/net/phy/phylink.c	2026-03-30 15:49:47.149337753 -0400
+@@ -291,6 +291,9 @@
+ 		return SPEED_100000;
+ 
+ 	case PHY_INTERFACE_MODE_INTERNAL:
++		/* Internal PHY - don't limit speed, let MAC caps decide */
++		return SPEED_1600000;
++
+ 	case PHY_INTERFACE_MODE_NA:
+ 	case PHY_INTERFACE_MODE_MAX:
+ 		/* No idea! Garbage in, unknown out */

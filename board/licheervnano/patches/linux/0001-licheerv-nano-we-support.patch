@@ -1,0 +1,87 @@
+diff --git a/arch/riscv/boot/dts/sophgo/Makefile b/arch/riscv/boot/dts/sophgo/Makefile
+index 6f65526d4193..6d30c9f84db8 100644
+--- a/arch/riscv/boot/dts/sophgo/Makefile
++++ b/arch/riscv/boot/dts/sophgo/Makefile
+@@ -2,6 +2,7 @@
+ dtb-$(CONFIG_ARCH_SOPHGO) += cv1800b-milkv-duo.dtb
+ dtb-$(CONFIG_ARCH_SOPHGO) += cv1812h-huashan-pi.dtb
+ dtb-$(CONFIG_ARCH_SOPHGO) += sg2002-licheerv-nano-b.dtb
++dtb-$(CONFIG_ARCH_SOPHGO) += sg2002-licheerv-nano-we.dtb
+ dtb-$(CONFIG_ARCH_SOPHGO) += sg2042-milkv-pioneer.dtb
+ dtb-$(CONFIG_ARCH_SOPHGO) += sg2042-evb-v1.dtb
+ dtb-$(CONFIG_ARCH_SOPHGO) += sg2042-evb-v2.dtb
+diff --git a/arch/riscv/boot/dts/sophgo/sg2002-licheerv-nano-b.dts b/arch/riscv/boot/dts/sophgo/sg2002-licheerv-nano-b.dts
+index b1853770d017..69b5458a93ac 100644
+--- a/arch/riscv/boot/dts/sophgo/sg2002-licheerv-nano-b.dts
++++ b/arch/riscv/boot/dts/sophgo/sg2002-licheerv-nano-b.dts
+@@ -95,6 +95,6 @@ &uart0 {
+ };
+ 
+ &usb {
+-	dr_mode = "host";
++	dr_mode = "peripheral";
+ 	status = "okay";
+ };
+diff --git a/arch/riscv/boot/dts/sophgo/sg2002-licheerv-nano-we.dts b/arch/riscv/boot/dts/sophgo/sg2002-licheerv-nano-we.dts
+new file mode 100644
+index 000000000000..99e3a574fafa
+--- /dev/null
++++ b/arch/riscv/boot/dts/sophgo/sg2002-licheerv-nano-we.dts
+@@ -0,0 +1,57 @@
++// SPDX-License-Identifier: (GPL-2.0 OR MIT)
++/*
++ * Device tree for LicheeRV Nano WE (WiFi + Ethernet variant)
++ */
++
++#include "sg2002-licheerv-nano-b.dts"
++
++/ {
++	model = "LicheeRV Nano WE";
++	compatible = "sipeed,licheerv-nano-we", "sipeed,licheerv-nano",
++		     "sophgo,sg2002";
++};
++
++&usb {
++	dr_mode = "peripheral";
++	status = "okay";
++};
++
++/* Ethernet with fixed-link */
++&mdio {
++	status = "okay";
++};
++
++&gmac0 {
++	/delete-property/ phy-handle;
++	status = "okay";
++
++	fixed-link {
++		speed = <100>;
++		full-duplex;
++	};
++};
++
++/* SDIO for WiFi module (AIC8800) on SD1 */
++&sdhci1 {
++	compatible = "sophgo,sg2002-dwcmshc";
++	pinctrl-0 = <&sdio_wifi_cfg>;
++	pinctrl-names = "default";
++	bus-width = <4>;
++	no-mmc;
++	no-sd;
++	non-removable;
++	status = "okay";
++};
++
++&pinctrl {
++	sdio_wifi_cfg: sdio-wifi-cfg {
++		sdio-pins {
++			pinmux = <PINMUX(PIN_SD1_D3, 0)>,
++				 <PINMUX(PIN_SD1_D2, 0)>,
++				 <PINMUX(PIN_SD1_D1, 0)>,
++				 <PINMUX(PIN_SD1_D0, 0)>,
++				 <PINMUX(PIN_SD1_CMD, 0)>,
++				 <PINMUX(PIN_SD1_CLK, 0)>;
++		};
++	};
++};

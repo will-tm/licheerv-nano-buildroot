@@ -1,0 +1,20 @@
+net: stmmac: force 10/100 MAC caps when max-speed is 100
+
+--- a/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c	2026-03-30 12:53:26.484777243 -0400
++++ b/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c	2026-03-30 12:53:26.504389027 -0400
+@@ -892,8 +892,14 @@
+ 
+ 	config->mac_capabilities = priv->hw->link.caps;
+ 
+-	if (priv->plat->max_speed)
++	if (priv->plat->max_speed) {
++		/* Force 10/100 caps for SoCs with internal 100M PHY */
++		if (priv->plat->max_speed <= 100)
++			config->mac_capabilities |=
++				MAC_SYM_PAUSE | MAC_ASYM_PAUSE |
++				MAC_10 | MAC_100;
+ 		phylink_limit_mac_speed(config, priv->plat->max_speed);
++	}
+ 
+ 	return config->mac_capabilities;
+ }

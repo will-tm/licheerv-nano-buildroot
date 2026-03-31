@@ -1,0 +1,68 @@
+#!/bin/sh
+
+GADGET_DIR=/sys/kernel/config/usb_gadget/g1
+
+case "$1" in
+start)
+	mkdir -p $GADGET_DIR
+	cd $GADGET_DIR
+
+	echo 0x1d6b > idVendor   # Linux Foundation
+	echo 0x0104 > idProduct   # Multifunction Composite Gadget
+	echo 0x0100 > bcdDevice
+	echo 0x0200 > bcdUSB
+
+	mkdir -p strings/0x409
+	echo "licheerv-nano" > strings/0x409/serialnumber
+	echo "Sipeed" > strings/0x409/manufacturer
+	echo "LicheeRV Nano" > strings/0x409/product
+
+	# CDC ACM serial console
+	mkdir -p functions/acm.usb0
+
+	# RNDIS Ethernet
+	mkdir -p functions/rndis.usb0
+
+	# Mass storage (rootfs, read-only)
+	mkdir -p functions/mass_storage.usb0
+	echo 1 > functions/mass_storage.usb0/lun.0/ro
+	echo 1 > functions/mass_storage.usb0/lun.0/removable
+	ROOTDEV=$(awk '$2 == "/" {print $1}' /proc/mounts | head -1)
+	# Use the whole SD card for mass storage browsing (partition 1 = boot)
+	SDDEV=$(echo "$ROOTDEV" | sed 's/p[0-9]*$/p1/')
+	if [ -b "$SDDEV" ]; then
+		echo "$SDDEV" > functions/mass_storage.usb0/lun.0/file
+	fi
+
+	mkdir -p configs/c.1/strings/0x409
+	echo "CDC ACM + RNDIS + Mass Storage" > configs/c.1/strings/0x409/configuration
+	echo 250 > configs/c.1/MaxPower
+
+	ln -s functions/acm.usb0 configs/c.1/
+	ln -s functions/rndis.usb0 configs/c.1/
+	ln -s functions/mass_storage.usb0 configs/c.1/
+
+	UDC=$(ls /sys/class/udc/ | head -1)
+	[ -n "$UDC" ] && echo "$UDC" > UDC
+
+	# Configure RNDIS network interface
+	if [ -d /sys/class/net/usb0 ]; then
+		ifconfig usb0 10.42.0.1 netmask 255.255.255.0 up
+	fi
+	;;
+stop)
+	if [ -d $GADGET_DIR ]; then
+		echo "" > $GADGET_DIR/UDC 2>/dev/null
+		rm -f $GADGET_DIR/configs/c.1/acm.usb0
+		rm -f $GADGET_DIR/configs/c.1/rndis.usb0
+		rm -f $GADGET_DIR/configs/c.1/mass_storage.usb0
+		rmdir $GADGET_DIR/configs/c.1/strings/0x409 2>/dev/null
+		rmdir $GADGET_DIR/configs/c.1 2>/dev/null
+		rmdir $GADGET_DIR/functions/acm.usb0 2>/dev/null
+		rmdir $GADGET_DIR/functions/rndis.usb0 2>/dev/null
+		rmdir $GADGET_DIR/functions/mass_storage.usb0 2>/dev/null
+		rmdir $GADGET_DIR/strings/0x409 2>/dev/null
+		rmdir $GADGET_DIR 2>/dev/null
+	fi
+	;;
+esac

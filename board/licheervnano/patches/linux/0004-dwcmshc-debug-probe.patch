@@ -1,0 +1,25 @@
+mmc: sdhci-dwcmshc: add probe debug messages
+
+--- a/drivers/mmc/host/sdhci-of-dwcmshc.c	2026-03-30 22:05:28.049503478 -0400
++++ b/drivers/mmc/host/sdhci-of-dwcmshc.c	2026-03-30 22:05:28.060062853 -0400
+@@ -1967,6 +1967,8 @@
+ 	int err;
+ 	u32 extra, caps;
+ 
++	dev_info(&pdev->dev, "dwcmshc_probe: starting probe\n");
++
+ 	pltfm_data = device_get_match_data(&pdev->dev);
+ 	if (!pltfm_data) {
+ 		dev_err(&pdev->dev, "Error: No device match data found\n");
+@@ -1975,8 +1977,10 @@
+ 
+ 	host = sdhci_pltfm_init(pdev, &pltfm_data->pdata,
+ 				sizeof(struct dwcmshc_priv));
+-	if (IS_ERR(host))
++	if (IS_ERR(host)) {
++		dev_err(&pdev->dev, "dwcmshc_probe: sdhci_pltfm_init failed: %ld\n", PTR_ERR(host));
+ 		return PTR_ERR(host);
++	}
+ 
+ 	/*
+ 	 * extra adma table cnt for cross 128M boundary handling.

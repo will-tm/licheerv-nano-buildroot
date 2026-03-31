@@ -1,0 +1,2 @@
+source "$BR2_EXTERNAL_LICHERVNANO_PATH/package/aic8800-sdio-driver/Config.in"
+source "$BR2_EXTERNAL_LICHERVNANO_PATH/package/aic8800-sdio-firmware/Config.in"

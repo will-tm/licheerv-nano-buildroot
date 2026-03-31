@@ -1,0 +1,20 @@
+#!/bin/sh
+
+case "$1" in
+start)
+	printf "Starting ethernet: "
+	ip link set eth0 up 2>/dev/null
+	udhcpc -i eth0 -t 5 -T 1 -A 3 -b -p /var/run/udhcpc.eth0.pid 2>/dev/null &
+	echo "OK"
+	;;
+stop)
+	printf "Stopping ethernet: "
+	[ -f /var/run/udhcpc.eth0.pid ] && kill "$(cat /var/run/udhcpc.eth0.pid)" 2>/dev/null
+	ip link set eth0 down 2>/dev/null
+	echo "OK"
+	;;
+restart)
+	"$0" stop
+	"$0" start
+	;;
+esac
